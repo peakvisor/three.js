@@ -778,9 +778,11 @@ function WebGLRenderer( parameters = {} ) {
 
 		if ( drawCount === 0 ) return;
 
-		//
+		if (object.isTriangleStrip) {
 
-		if ( object.isMesh ) {
+			renderer.setMode(_gl.TRIANGLE_STRIP);
+
+		} else if ( object.isMesh ) {
 
 			if ( material.wireframe === true ) {
 

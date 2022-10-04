@@ -39,6 +39,10 @@ function WebGLInfo( gl ) {
 				render.points += instanceCount * count;
 				break;
 
+			case gl.TRIANGLE_STRIP:
+				render.triangles += instanceCount * ( count - 2 );
+				break;
+
 			default:
 				console.error( 'THREE.WebGLInfo: Unknown draw mode:', mode );
 				break;

@@ -5,7 +5,7 @@ import { Vector2 } from '../math/Vector2.js';
 
 class CylinderGeometry extends BufferGeometry {
 
-	constructor( radiusTop = 1, radiusBottom = 1, height = 1, radialSegments = 8, heightSegments = 1, openEnded = false, thetaStart = 0, thetaLength = Math.PI * 2 ) {
+	constructor( radiusTop = 1, radiusBottom = 1, height = 1, radialSegments = 8, heightSegments = 1, openEnded = false, thetaStart = Math.PI/2-Math.PI/8, thetaLength = Math.PI * 2 ) {
 
 		super();
 
@@ -71,50 +71,55 @@ class CylinderGeometry extends BufferGeometry {
 
 			// generate vertices, normals and uvs
 
-			for ( let y = 0; y <= heightSegments; y ++ ) {
+			for (let segment = 0; segment < radialSegments; ++segment) {
 
-				const indexRow = [];
+				for ( let y = 0; y <= heightSegments; y ++ ) {
 
-				const v = y / heightSegments;
+					const indexRow = [];
 
-				// calculate the radius of the current row
+					const v = y / heightSegments;
 
-				const radius = v * ( radiusBottom - radiusTop ) + radiusTop;
+					// calculate the radius of the current row
 
-				for ( let x = 0; x <= radialSegments; x ++ ) {
+					const radius = v * ( radiusBottom - radiusTop ) + radiusTop;
 
-					const u = x / radialSegments;
+					for ( let x = 0; x <= 1; x ++ ) {
 
-					const theta = u * thetaLength + thetaStart;
+						const u = x;
 
-					const sinTheta = Math.sin( theta );
-					const cosTheta = Math.cos( theta );
+						const theta = u * thetaLength / radialSegments + thetaStart;
 
-					// vertex
+						const sinTheta = Math.sin( theta );
+						const cosTheta = Math.cos( theta );
 
-					vertex.x = radius * sinTheta;
-					vertex.y = - v * height + halfHeight;
-					vertex.z = radius * cosTheta;
-					vertices.push( vertex.x, vertex.y, vertex.z );
+						// vertex
 
-					// normal
+						vertex.x = radius * sinTheta;
+						vertex.y = - v * height + halfHeight;
+						vertex.z = radius * cosTheta;
+						vertices.push( vertex.x, vertex.y, vertex.z );
+						
+						// normal
 
-					normal.set( sinTheta, slope, cosTheta ).normalize();
-					normals.push( normal.x, normal.y, normal.z );
+						normal.set( sinTheta, slope, cosTheta ).normalize();
+						normals.push( normal.x, normal.y, normal.z );
 
-					// uv
+						// uv
+						uvs.push( 1-v, u );
+						
+						// save index of vertex in respective row
 
-					uvs.push( u, 1 - v );
+						indexRow.push( index ++ );
 
-					// save index of vertex in respective row
+					}
 
-					indexRow.push( index ++ );
+					// now save vertices of the row in our index array
+
+					indexArray.push( indexRow );
 
 				}
 
-				// now save vertices of the row in our index array
-
-				indexArray.push( indexRow );
+				thetaStart += thetaLength / radialSegments;
 
 			}
 
@@ -126,10 +131,10 @@ class CylinderGeometry extends BufferGeometry {
 
 					// we use the index array to access the correct indices
 
-					const a = indexArray[ y ][ x ];
-					const b = indexArray[ y + 1 ][ x ];
-					const c = indexArray[ y + 1 ][ x + 1 ];
-					const d = indexArray[ y ][ x + 1 ];
+					const a = indexArray[ x * 2 + y ][ 0 ];
+					const b = indexArray[ x * 2 + y + 1 ][ 0 ];
+					const c = indexArray[ x * 2 + y + 1 ][ 1 ];
+					const d = indexArray[ x * 2 +y ][ 1 ];
 
 					// faces
 
@@ -142,15 +147,17 @@ class CylinderGeometry extends BufferGeometry {
 
 				}
 
+				// add a group to the geometry. this will ensure multi material support
+
+				scope.addGroup( groupStart, groupCount, x );
+
+				// calculate new start value for groups
+
+				groupStart += groupCount;
+
+				groupCount = 0;
+
 			}
-
-			// add a group to the geometry. this will ensure multi material support
-
-			scope.addGroup( groupStart, groupCount, 0 );
-
-			// calculate new start value for groups
-
-			groupStart += groupCount;
 
 		}
 
@@ -254,7 +261,7 @@ class CylinderGeometry extends BufferGeometry {
 
 			// add a group to the geometry. this will ensure multi material support
 
-			scope.addGroup( groupStart, groupCount, top === true ? 1 : 2 );
+			scope.addGroup( groupStart, groupCount, radialSegments + (top === true ? 0 : 1) );
 
 			// calculate new start value for groups
 
