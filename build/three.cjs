@@ -24119,7 +24119,7 @@ class CylinderGeometry extends BufferGeometry {
 		generateTorso();
 
 		if (openEnded === false) {
-			if (radiusTop > 0) generateCap(true);
+			//if ( radiusTop > 0 ) generateCap( true );
 			if (radiusBottom > 0) generateCap(false);
 		} // build geometry
 
@@ -24136,6 +24136,8 @@ class CylinderGeometry extends BufferGeometry {
 
 			const slope = (radiusBottom - radiusTop) / height; // generate vertices, normals and uvs
 
+			let thetaOffset = 0;
+
 			for (let segment = 0; segment < radialSegments; ++segment) {
 				for (let y = 0; y <= heightSegments; y++) {
 					const indexRow = [];
@@ -24145,7 +24147,7 @@ class CylinderGeometry extends BufferGeometry {
 
 					for (let x = 0; x <= 1; x++) {
 						const u = x;
-						const theta = u * thetaLength / radialSegments + thetaStart;
+						const theta = u * thetaLength / radialSegments + thetaStart + thetaOffset;
 						const sinTheta = Math.sin(theta);
 						const cosTheta = Math.cos(theta); // vertex
 
@@ -24166,7 +24168,7 @@ class CylinderGeometry extends BufferGeometry {
 					indexArray.push(indexRow);
 				}
 
-				thetaStart += thetaLength / radialSegments;
+				thetaOffset += thetaLength / radialSegments;
 			} // generate indices
 
 
@@ -24220,8 +24222,8 @@ class CylinderGeometry extends BufferGeometry {
 			for (let x = 0; x <= radialSegments; x++) {
 				const u = x / radialSegments;
 				const theta = u * thetaLength + thetaStart;
-				const cosTheta = Math.cos(theta);
-				const sinTheta = Math.sin(theta); // vertex
+				let cosTheta = Math.cos(theta);
+				let sinTheta = Math.sin(theta); // vertex
 
 				vertex.x = radius * sinTheta;
 				vertex.y = halfHeight * sign;
@@ -24230,6 +24232,8 @@ class CylinderGeometry extends BufferGeometry {
 
 				normals.push(0, sign, 0); // uv
 
+				cosTheta = Math.cos(theta - thetaStart - Math.PI / 8) / Math.cos(Math.PI / 8);
+				sinTheta = Math.sin(theta - thetaStart - Math.PI / 8) / Math.cos(Math.PI / 8);
 				uv.x = cosTheta * 0.5 + 0.5;
 				uv.y = sinTheta * 0.5 * sign + 0.5;
 				uvs.push(uv.x, uv.y); // increase index
